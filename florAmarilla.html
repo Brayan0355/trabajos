@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Girasol SVG (corregido)</title>
+  <style>
+    :root{ --bg1:#fff8dc; --bg2:#ffe066; --bg3:#ffdd44 }
+    html,body{height:100%;margin:0}
+    body{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex-direction:column;
+      background: linear-gradient(270deg,var(--bg1),var(--bg2),var(--bg3));
+      background-size:600% 600%;
+      animation:fondoAnimado 14s ease-in-out infinite;
+      font-family: 'Segoe UI', Roboto, system-ui, -apple-system, 'Helvetica Neue', Arial;
+      overflow:hidden;
+    }
+
+    @keyframes fondoAnimado{
+      0%{background-position:0% 50%}
+      50%{background-position:100% 50%}
+      100%{background-position:0% 50%}
+    }
+
+    .stage{
+      width:480px;
+      max-width:90vw;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:18px;
+      position:relative;
+      padding:24px 0;
+    }
+
+    svg{display:block; width:420px; height:auto; overflow:visible}
+
+    .sunflower-group{
+      transform-origin:50% 50%;
+      animation:sway 6s ease-in-out infinite;
+    }
+
+    @keyframes sway{
+      0%{transform:rotate(-4deg)}
+      50%{transform:rotate(4deg)}
+      100%{transform:rotate(-4deg)}
+    }
+
+    /* petal: no CSS transform that pueda sobrescribir la rotación del grupo */
+    .petal{
+      /* animaciones locales pequeñas: podemos animar atributos si queremos; por ahora dejamos estático
+         para asegurarnos de que la rotación (hecha con el atributo transform en el <g>) no se pierda. */
+      fill: url(#petalGrad);
+      opacity:0.98;
+      filter: drop-shadow(0 6px 6px rgba(0,0,0,0.08));
+    }
+
+    .mensaje{font-size:1.4rem;color:#5a3a1a;text-shadow:0 0 8px #fff176;font-weight:700}
+
+    .brillo{
+      position:absolute;
+      width:8px;height:8px;border-radius:50%;
+      background:rgba(255,255,255,0.9);
+      box-shadow:0 0 12px rgba(255,235,59,0.9);
+      opacity:0.9;
+      pointer-events:none;
+      animation:floatUp linear infinite;
+    }
+    @keyframes floatUp{from{transform:translateY(120vh)}to{transform:translateY(-10vh); opacity:0}}
+
+    @media (max-width:420px){ svg{width:320px} }
+  </style>
+</head>
+<body>
+  <div class="stage">
+
+    <svg id="sun" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" aria-label="Girasol">
+      <defs>
+        <radialGradient id="petalGrad" cx="50%" cy="30%">
+          <stop offset="0%" stop-color="#fff07a" />
+          <stop offset="60%" stop-color="#ffd100" />
+          <stop offset="100%" stop-color="#ffb300" />
+        </radialGradient>
+
+        <radialGradient id="centerGrad" cx="40%" cy="30%">
+          <stop offset="0%" stop-color="#7b4f2a" />
+          <stop offset="60%" stop-color="#5a3a1a" />
+          <stop offset="100%" stop-color="#341a0b" />
+        </radialGradient>
+
+        <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="6" result="blur" />
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+
+      <g class="sunflower-group">
+        <!-- PETAL GROUP: las elipses se colocan en posición relativa al centro y
+             cada una se envuelve en un <g> rotado alrededor del centro. -->
+        <g id="petals"></g>
+
+        <!-- círculo central (se coloca DESPUÉS de los pétalos para quedar encima y "en medio") -->
+        <circle id="center" cx="200" cy="200" r="70" fill="url(#centerGrad)" filter="url(#softGlow)" />
+
+        <!-- semillas -->
+        <g id="seeds"></g>
+
+        <!-- tallo dentro del mismo SVG para escalar correctamente -->
+        <g id="stem" transform="translate(200,280)">
+          <rect x="-12" y="0" width="24" height="260" rx="12" fill="url(#stemGrad)" />
+        </g>
+      </g>
+    </svg>
+
+    <div class="mensaje">Feliz Día de las Flores Amarillas Paty 🌻💛</div>
+  </div>
+
+  <script>
+    // brillos flotantes (HTML)
+    for(let i=0;i<18;i++){
+      const b = document.createElement('div');
+      b.className = 'brillo';
+      b.style.left = Math.random()*100 + 'vw';
+      b.style.bottom = (-10 + Math.random()*100) + 'vh';
+      b.style.width = (6 + Math.random()*12) + 'px';
+      b.style.height = b.style.width;
+      b.style.animationDuration = (6 + Math.random()*10) + 's';
+      b.style.opacity = 0.6 + Math.random()*0.4;
+      document.body.appendChild(b);
+    }
+
+    // SVG: crear pétalos dentro de <g> rotadas para no perder la rotación por efectos CSS
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const petalsGroup = document.getElementById('petals');
+    const seedsGroup = document.getElementById('seeds');
+    const svgRoot = document.getElementById('sun');
+
+    // gradiente del tallo
+    const defs = svgRoot.querySelector('defs');
+    const stemGrad = document.createElementNS(svgNS,'linearGradient');
+    stemGrad.setAttribute('id','stemGrad');
+    stemGrad.setAttribute('x1','0%'); stemGrad.setAttribute('x2','0%'); stemGrad.setAttribute('y1','0%'); stemGrad.setAttribute('y2','100%');
+    let s1 = document.createElementNS(svgNS,'stop'); s1.setAttribute('offset','0%'); s1.setAttribute('stop-color','#3b8d3b');
+    let s2 = document.createElementNS(svgNS,'stop'); s2.setAttribute('offset','100%'); s2.setAttribute('stop-color','#1f5a20');
+    stemGrad.appendChild(s1); stemGrad.appendChild(s2);
+    defs.appendChild(stemGrad);
+
+    const centerX = 200, centerY = 200;
+    const petalCount = 28;
+    const petalRadius = 120; // distancia desde el centro al centro del pétalo
+    const petalRX = 18; // ancho del pétalo
+    const petalRY = 78; // alto del pétalo
+
+    for(let i=0;i<petalCount;i++){
+      const angle = i * (360 / petalCount);
+      // grupo rotado alrededor del centro
+      const g = document.createElementNS(svgNS,'g');
+      g.setAttribute('transform', `rotate(${angle} ${centerX} ${centerY})`);
+
+      // la elipse se coloca arriba del centro, luego al rotar el <g> se distribuye correctamente
+      const e = document.createElementNS(svgNS,'ellipse');
+      e.setAttribute('cx', centerX);
+      e.setAttribute('cy', centerY - petalRadius);
+      e.setAttribute('rx', petalRX);
+      e.setAttribute('ry', petalRY);
+      e.setAttribute('class','petal');
+
+      g.appendChild(e);
+      petalsGroup.appendChild(g);
+    }
+
+    // semillas
+    const seedCount = 120;
+    for(let i=0;i<seedCount;i++){
+      const r = Math.sqrt(Math.random()) * 58;
+      const theta = Math.random()*Math.PI*2;
+      const sx = centerX + Math.cos(theta)*r;
+      const sy = centerY + Math.sin(theta)*r;
+      const c = document.createElementNS(svgNS,'circle');
+      c.setAttribute('cx', sx);
+      c.setAttribute('cy', sy);
+      c.setAttribute('r', 1 + Math.random()*2.4);
+      c.setAttribute('fill', '#2b1a10');
+      c.setAttribute('opacity', 0.9);
+      seedsGroup.appendChild(c);
+    }
+
+    // hojas (simples) cerca del tallo
+    const leafL = document.createElementNS(svgNS,'path');
+    leafL.setAttribute('d','M-10 40 C -90 0, -90 120, -10 80');
+    leafL.setAttribute('fill','url(#leafGradL)');
+    leafL.setAttribute('transform','translate(0,30) rotate(-20) scale(1.2)');
+
+    const leafR = document.createElementNS(svgNS,'path');
+    leafR.setAttribute('d','M10 40 C 90 0, 90 120, 10 80');
+    leafR.setAttribute('fill','url(#leafGradR)');
+    leafR.setAttribute('transform','translate(0,30) rotate(20) scale(1.2)');
+
+    const leafGradL = document.createElementNS(svgNS,'linearGradient'); leafGradL.setAttribute('id','leafGradL'); leafGradL.setAttribute('x1','0%'); leafGradL.setAttribute('x2','100%');
+    let lg1 = document.createElementNS(svgNS,'stop'); lg1.setAttribute('offset','0%'); lg1.setAttribute('stop-color','#4db84d');
+    let lg2 = document.createElementNS(svgNS,'stop'); lg2.setAttribute('offset','100%'); lg2.setAttribute('stop-color','#1e7a1e');
+    leafGradL.appendChild(lg1); leafGradL.appendChild(lg2);
+    const leafGradR = leafGradL.cloneNode(true); leafGradR.setAttribute('id','leafGradR');
+    defs.appendChild(leafGradL); defs.appendChild(leafGradR);
+
+    const leafGroup = document.createElementNS(svgNS,'g');
+    leafGroup.setAttribute('transform','translate(200,300)');
+    leafGroup.appendChild(leafL); leafGroup.appendChild(leafR);
+    svgRoot.appendChild(leafGroup);
+
+  </script>
+</body>
+</html>
